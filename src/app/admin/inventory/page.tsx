@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { Icon } from "@/components/ui/Icon";
 import { useCategories, useProducts, useSettings } from "@/lib/client/hooks";
@@ -103,10 +103,10 @@ export default function InventoryPage() {
       <div className="space-y-6">
         <header className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
+            <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
               {t("admin.inventory")}
             </h1>
-            <p className="text-sm text-ink-500">
+            <p className="mt-1 text-sm text-ink-500">
               Manage your product catalog, stock and pricing. Changes propagate
               to the storefront in real time.
             </p>
@@ -132,92 +132,176 @@ export default function InventoryPage() {
           />
         </div>
 
-        <div className="overflow-hidden rounded-2xl border border-ink-100 bg-white shadow-soft">
-          <table className="min-w-full text-sm">
-            <thead className="bg-ink-50 text-ink-600">
-              <tr>
-                <th className="px-4 py-3 text-start font-medium">Product</th>
-                <th className="px-4 py-3 text-start font-medium">SKU</th>
-                <th className="px-4 py-3 text-start font-medium">Category</th>
-                <th className="px-4 py-3 text-end font-medium">Price</th>
-                <th className="px-4 py-3 text-end font-medium">Stock</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-ink-100">
-              {loading && (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-ink-400">
-                    Loading…
-                  </td>
-                </tr>
-              )}
-              {!loading && filtered.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-ink-400">
-                    No products.
-                  </td>
-                </tr>
-              )}
-              {filtered.map((p) => {
-                const cat = categories.find((c) => c.id === p.categoryId);
-                return (
-                  <tr key={p.id} className="hover:bg-ink-50/50">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={p.image}
-                          alt=""
-                          className="h-10 w-10 rounded-lg object-cover"
-                        />
-                        <span className="font-medium">{p.name[locale]}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-ink-600">{p.sku}</td>
-                    <td className="px-4 py-3 text-ink-600">
-                      {cat?.name[locale] ?? "—"}
-                    </td>
-                    <td className="px-4 py-3 text-end">
-                      {formatCurrency(p.price, locale, currency)}
-                    </td>
-                    <td className="px-4 py-3 text-end">
-                      <span
-                        className={cn(
-                          "inline-flex rounded-full px-2 py-0.5 text-xs font-medium",
-                          p.stock <= 10
-                            ? "bg-red-50 text-red-700"
-                            : p.stock <= 25
-                            ? "bg-amber-50 text-amber-700"
-                            : "bg-emerald-50 text-emerald-700"
-                        )}
+        {/*
+          Desktop: traditional data-table.
+          Mobile (< md): card list. The table is very wide — 6 columns with
+          image + localized name + currency — so below `md` we render each
+          product as a self-contained card instead of letting the table
+          overflow and making the user scroll horizontally.
+        */}
+
+        {/* ----- MOBILE: card layout ------------------------------------ */}
+        <div className="space-y-3 md:hidden">
+          {loading && (
+            <div className="rounded-2xl border border-ink-100 bg-white p-6 text-center text-ink-400 shadow-soft">
+              Loading…
+            </div>
+          )}
+          {!loading && filtered.length === 0 && (
+            <div className="rounded-2xl border border-ink-100 bg-white p-6 text-center text-ink-400 shadow-soft">
+              No products.
+            </div>
+          )}
+          {filtered.map((p) => {
+            const cat = categories.find((c) => c.id === p.categoryId);
+            return (
+              <article
+                key={p.id}
+                className="flex gap-3 rounded-2xl border border-ink-100 bg-white p-3 shadow-soft"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={p.image}
+                  alt=""
+                  className="h-20 w-20 flex-none rounded-xl object-cover"
+                />
+                <div className="min-w-0 flex-1 space-y-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="truncate text-sm font-semibold">
+                      {p.name[locale]}
+                    </h3>
+                    <div className="flex flex-none gap-1">
+                      <button
+                        onClick={() => setEditing(toDraft(p))}
+                        className="grid h-8 w-8 place-items-center rounded-lg text-ink-600 hover:bg-ink-100"
+                        aria-label="Edit"
                       >
-                        {p.stock}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-end">
-                      <div className="inline-flex gap-1">
-                        <button
-                          onClick={() => setEditing(toDraft(p))}
-                          className="grid h-8 w-8 place-items-center rounded-lg text-ink-600 hover:bg-ink-100"
-                          aria-label="Edit"
-                        >
-                          <Icon name="Edit" size={16} />
-                        </button>
-                        <button
-                          onClick={() => remove(p.id)}
-                          className="grid h-8 w-8 place-items-center rounded-lg text-ink-600 hover:bg-red-50 hover:text-red-600"
-                          aria-label="Delete"
-                        >
-                          <Icon name="Trash2" size={16} />
-                        </button>
-                      </div>
+                        <Icon name="Edit" size={14} />
+                      </button>
+                      <button
+                        onClick={() => remove(p.id)}
+                        className="grid h-8 w-8 place-items-center rounded-lg text-ink-600 hover:bg-red-50 hover:text-red-600"
+                        aria-label="Delete"
+                      >
+                        <Icon name="Trash2" size={14} />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="text-xs text-ink-500">
+                    {p.sku} · {cat?.name[locale] ?? "—"}
+                  </div>
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-sm font-semibold">
+                      {formatCurrency(p.price, locale, currency)}
+                    </span>
+                    <span
+                      className={cn(
+                        "inline-flex rounded-full px-2 py-0.5 text-xs font-medium",
+                        p.stock <= 10
+                          ? "bg-red-50 text-red-700"
+                          : p.stock <= 25
+                          ? "bg-amber-50 text-amber-700"
+                          : "bg-emerald-50 text-emerald-700"
+                      )}
+                    >
+                      {p.stock} in stock
+                    </span>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+
+        {/* ----- DESKTOP: table ----------------------------------------- */}
+        <div className="hidden overflow-hidden rounded-2xl border border-ink-100 bg-white shadow-soft md:block">
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="bg-ink-50 text-ink-600">
+                <tr>
+                  <th className="px-4 py-3 text-start font-medium">Product</th>
+                  <th className="px-4 py-3 text-start font-medium">SKU</th>
+                  <th className="px-4 py-3 text-start font-medium">Category</th>
+                  <th className="px-4 py-3 text-end font-medium">Price</th>
+                  <th className="px-4 py-3 text-end font-medium">Stock</th>
+                  <th className="px-4 py-3" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-ink-100">
+                {loading && (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-8 text-center text-ink-400">
+                      Loading…
                     </td>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                )}
+                {!loading && filtered.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-8 text-center text-ink-400">
+                      No products.
+                    </td>
+                  </tr>
+                )}
+                {filtered.map((p) => {
+                  const cat = categories.find((c) => c.id === p.categoryId);
+                  return (
+                    <tr key={p.id} className="hover:bg-ink-50/50">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={p.image}
+                            alt=""
+                            className="h-10 w-10 rounded-lg object-cover"
+                          />
+                          <span className="font-medium">{p.name[locale]}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-ink-600">{p.sku}</td>
+                      <td className="px-4 py-3 text-ink-600">
+                        {cat?.name[locale] ?? "—"}
+                      </td>
+                      <td className="px-4 py-3 text-end">
+                        {formatCurrency(p.price, locale, currency)}
+                      </td>
+                      <td className="px-4 py-3 text-end">
+                        <span
+                          className={cn(
+                            "inline-flex rounded-full px-2 py-0.5 text-xs font-medium",
+                            p.stock <= 10
+                              ? "bg-red-50 text-red-700"
+                              : p.stock <= 25
+                              ? "bg-amber-50 text-amber-700"
+                              : "bg-emerald-50 text-emerald-700"
+                          )}
+                        >
+                          {p.stock}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-end">
+                        <div className="inline-flex gap-1">
+                          <button
+                            onClick={() => setEditing(toDraft(p))}
+                            className="grid h-8 w-8 place-items-center rounded-lg text-ink-600 hover:bg-ink-100"
+                            aria-label="Edit"
+                          >
+                            <Icon name="Edit" size={16} />
+                          </button>
+                          <button
+                            onClick={() => remove(p.id)}
+                            className="grid h-8 w-8 place-items-center rounded-lg text-ink-600 hover:bg-red-50 hover:text-red-600"
+                            aria-label="Delete"
+                          >
+                            <Icon name="Trash2" size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -232,6 +316,10 @@ export default function InventoryPage() {
     </AdminShell>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Product editor modal
+// ---------------------------------------------------------------------------
 
 function ProductEditor({
   draft,
@@ -311,12 +399,10 @@ function ProductEditor({
                 className={inputCls}
               />
             </L>
-            <L label="Image URL" wide>
-              <input
+            <L label="Product image" wide>
+              <ImageUpload
                 value={d.image}
-                onChange={(e) => setD({ ...d, image: e.target.value })}
-                className={inputCls}
-                placeholder="https://…"
+                onChange={(url) => setD({ ...d, image: url })}
               />
             </L>
             <L label="Name (EN)">
@@ -385,6 +471,167 @@ function ProductEditor({
           </button>
         </footer>
       </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Image upload control
+//
+// Replaces the old text input. Selecting a file:
+//   1. Shows an instant preview via URL.createObjectURL (no network round-trip)
+//   2. Uploads to /api/upload which pushes to the Supabase Storage
+//      `product-images` bucket with the service-role key.
+//   3. Writes the returned public URL back to the draft so `image` in the
+//      products table is a CDN URL you can use directly in <img src>.
+//
+// Manual URL entry is preserved as a fallback for power users (e.g. pasting
+// a CDN URL from elsewhere) — the field below the dropzone.
+// ---------------------------------------------------------------------------
+
+function ImageUpload({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (url: string) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  // Local preview (object URL) for the split second between "file picked" and
+  // "server responded with CDN URL". This makes the UI feel instant.
+  const [localPreview, setLocalPreview] = useState<string | null>(null);
+
+  // Best: show localPreview while uploading, then the real CDN url once saved.
+  const preview = localPreview ?? (value || null);
+
+  async function handleFile(file: File) {
+    setError(null);
+    // Instant preview while the file is in flight. We revoke the object URL
+    // once we have the real CDN URL (or on next selection) to avoid leaks.
+    if (localPreview) URL.revokeObjectURL(localPreview);
+    const objUrl = URL.createObjectURL(file);
+    setLocalPreview(objUrl);
+
+    const form = new FormData();
+    form.append("file", file);
+    form.append("folder", "products");
+
+    setUploading(true);
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: form,
+        credentials: "same-origin",
+      });
+      const json = (await res.json().catch(() => ({}))) as {
+        data?: { url: string };
+        error?: string;
+      };
+      if (!res.ok) {
+        throw new Error(json.error ?? `Upload failed (${res.status})`);
+      }
+      if (!json.data?.url) throw new Error("Upload returned no URL");
+      onChange(json.data.url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function onPick(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (f) void handleFile(f);
+    // Reset the input so picking the same file again still fires onChange.
+    e.target.value = "";
+  }
+
+  function clear() {
+    if (localPreview) URL.revokeObjectURL(localPreview);
+    setLocalPreview(null);
+    onChange("");
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        {/* Thumbnail preview */}
+        <div className="relative flex h-28 w-28 flex-none items-center justify-center overflow-hidden rounded-xl border border-dashed border-ink-200 bg-ink-50">
+          {preview ? (
+            // Using <img> instead of next/image so an arbitrary CDN hostname
+            // (e.g. a custom Supabase project URL) works out of the box
+            // without needing a next.config.mjs change per deployment.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={preview}
+              alt="Preview"
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="grid place-items-center text-ink-400">
+              <Icon name="Image" size={22} />
+            </div>
+          )}
+          {uploading && (
+            <div className="absolute inset-0 grid place-items-center bg-white/70 text-xs font-medium text-ink-700">
+              Uploading…
+            </div>
+          )}
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/gif,image/avif"
+            onChange={onPick}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            disabled={uploading}
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-ink-200 bg-white px-3 text-sm font-medium text-ink-700 hover:border-ink-300 disabled:opacity-60"
+          >
+            <Icon name="Upload" size={14} />
+            {value ? "Replace image" : "Upload image"}
+          </button>
+          {value && !uploading && (
+            <button
+              type="button"
+              onClick={clear}
+              className="inline-flex h-10 items-center gap-2 rounded-xl border border-ink-200 bg-white px-3 text-sm font-medium text-ink-700 hover:border-ink-300"
+            >
+              <Icon name="Trash2" size={14} />
+              Remove
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Power-user fallback: paste a URL directly. Kept hidden behind a
+          small label so the upload flow is the obvious primary action but
+          CDN links still work for folks who don't want to upload. */}
+      <label className="block">
+        <span className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-ink-500">
+          Or paste an image URL
+        </span>
+        <input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className={inputCls}
+          placeholder="https://…"
+          disabled={uploading}
+        />
+      </label>
+
+      {error && (
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
