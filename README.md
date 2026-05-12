@@ -29,7 +29,19 @@ A production-grade e-commerce reference built with **Next.js 14 (App Router)**, 
 ## Running
 
 ```bash
+# 1) Install deps
 npm install
+
+# 2) Set up Supabase (one-time)
+#    - Create a project on https://supabase.com
+#    - SQL Editor → paste supabase/schema.sql → Run
+#    - Copy SUPABASE_URL, anon key, and service-role key into .env.local
+cp .env.example .env.local   # fill in the values
+
+# 3) Seed the database (12 products, 2 users, settings, etc.)
+npm run seed
+
+# 4) Start
 npm run dev        # storefront http://localhost:3000 · admin http://localhost:3000/admin
 ```
 
@@ -37,10 +49,25 @@ npm run dev        # storefront http://localhost:3000 · admin http://localhost:
 - Admin: `admin@nova.shop` / `admin1234`
 - Customer: `demo@nova.shop` / `demo1234`
 
-**Environment variables**
-- `NEXTAUTH_SECRET` — HMAC key for session cookies. A dev fallback is used if unset; **set this in production**.
+**Environment variables** (required — set these locally *and* in Vercel):
+| Name | Purpose |
+| --- | --- |
+| `SUPABASE_URL` | Supabase project URL |
+| `SUPABASE_ANON_KEY` | Anon key for public reads (products, categories, settings) |
+| `SUPABASE_SERVICE_ROLE_KEY` | **Server-only** — every admin write and order creation goes through this, bypassing RLS |
+| `NEXTAUTH_SECRET` | HMAC key for session cookies. Generate with `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"` |
 
-Scripts: `dev`, `build`, `start`, `lint`, `typecheck`.
+> **Never** expose `SUPABASE_SERVICE_ROLE_KEY` to the browser — it bypasses RLS. In Vercel, scope it to *Production + Preview + Development* but never prefix with `NEXT_PUBLIC_`.
+
+## Deploying to Vercel
+
+1. Push this branch to GitHub and import the repo at [vercel.com/new](https://vercel.com/new).
+2. Framework preset is auto-detected as **Next.js**. Leave build command and output defaults alone.
+3. **Project Settings → Environment Variables**, add the four variables above for every environment (Production, Preview, Development).
+4. Deploy.
+5. After the first deploy, run `npm run seed` locally once against the same Supabase project (the seed script uses your `.env.local`). The site will then show 12 products + working admin login.
+
+Scripts: `dev`, `build`, `start`, `lint`, `typecheck`, `seed`.
 
 ## Project structure
 
@@ -70,7 +97,7 @@ src/
 
 ## Key design notes
 
-- **Persistence** is file-backed JSON in dev (`.nova-db.json`) via an async API that mirrors a real DB client — replace `src/lib/server/db.ts` with a Supabase / Postgres / Firebase driver and nothing else changes.
+- **Persistence** is Supabase (PostgreSQL) via `@supabase/supabase-js` in `src/lib/server/db.ts`. Works on Vercel with no filesystem writes. Swap providers by replacing that file — route handlers stay the same.
 - **Realtime** uses an in-process `EventEmitter` → SSE. To scale horizontally, swap for Redis pub/sub, Postgres `LISTEN/NOTIFY`, or Supabase Realtime; the client contract (`/api/events`) stays the same.
 - **Authorization** is layered: Edge middleware for page/routes that never need per-method logic, and `getCurrentUser()` checks inside routes (orders, invoices, settings) for fine-grained rules.
 - **RTL** is done via logical CSS (`start-*`/`end-*`, `ps-*`/`pe-*`). `useI18n` syncs `<html dir/lang>`; the cart drawer mirrors its slide direction automatically.

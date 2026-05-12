@@ -1,7 +1,7 @@
 # Database Schema
 
 Nova is designed to run on a real relational database (PostgreSQL / Supabase) in production.
-In the reference implementation, the same shapes are persisted to `.nova-db.json` via `src/lib/server/db.ts` (a single file JSON store with the same async API a real driver would expose). Replace that module with your database client to go live — the route handlers will not need changes.
+In the reference implementation, persistence is Supabase (PostgreSQL) via the `@supabase/supabase-js` client in `src/lib/server/db.ts`. Swap providers by replacing that file — the route handlers don't change.
 
 ## Schema overview
 

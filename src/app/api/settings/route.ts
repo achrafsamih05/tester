@@ -3,6 +3,8 @@ import { getSettings, updateSettings } from "@/lib/server/db";
 import { emit } from "@/lib/server/bus";
 import type { Settings } from "@/lib/types";
 
+export const dynamic = "force-dynamic";
+
 // GET /api/settings — must be public so the storefront can read storeName,
 // currency, etc. Middleware gates /api/settings/* by default, but this
 // specific route is allowed via a small exception below the matcher. Since

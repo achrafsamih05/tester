@@ -7,6 +7,8 @@ import {
   listUsers,
 } from "@/lib/server/db";
 
+export const dynamic = "force-dynamic";
+
 // GET /api/analytics — admin only (gated via middleware).
 // Returns real, computed numbers — no placeholders.
 export async function GET() {
