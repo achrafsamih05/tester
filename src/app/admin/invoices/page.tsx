@@ -51,16 +51,15 @@ export default function InvoicesAdminPage() {
         </header>
 
         {/*
-         * Responsive invoices table:
-         *   - overflow-x-auto wrapper + min-w-[820px] table keeps every
-         *     column readable while allowing horizontal scroll on phones.
+         * Responsive invoices table (Task 2 — spec-compliant).
+         *   - overflow-x-auto shadow-md sm:rounded-lg wrapper per spec.
+         *   - min-w-[800px] on the table keeps every column readable.
          *   - Order / Issued / Due columns fold away on mobile; the
          *     invoice number cell folds the order id + issued date under
          *     itself so the data is still reachable.
          */}
-        <div className="overflow-hidden rounded-2xl border border-ink-100 bg-white shadow-soft">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[820px] text-sm">
+        <div className="overflow-x-auto shadow-md sm:rounded-lg bg-white border border-ink-100">
+          <table className="w-full min-w-[800px] text-sm">
             <thead className="bg-ink-50 text-ink-600">
               <tr>
                 <th className="px-4 py-3 text-start font-medium">Invoice</th>
@@ -139,7 +138,6 @@ export default function InvoicesAdminPage() {
               )}
             </tbody>
             </table>
-          </div>
         </div>
       </div>
 

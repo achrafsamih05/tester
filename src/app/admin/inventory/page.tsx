@@ -133,17 +133,18 @@ export default function InventoryPage() {
         </div>
 
         {/*
-         * Responsive table wrapper:
+         * Responsive table wrapper — exact spec from Task 2:
          *   - overflow-x-auto lets narrow screens scroll the table
          *     horizontally instead of squashing cells.
-         *   - min-w-[720px] on the inner <table> keeps columns readable
-         *     during that horizontal scroll.
+         *   - shadow-md + sm:rounded-lg gives the card treatment without
+         *     clipping the horizontal scrollbar.
+         *   - min-w-[800px] on the <table> keeps columns readable during
+         *     horizontal scroll.
          *   - Non-essential columns (SKU, Category, Price) are hidden
          *     below md; only Product / Stock / actions remain on mobile.
          */}
-        <div className="overflow-hidden rounded-2xl border border-ink-100 bg-white shadow-soft">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-sm">
+        <div className="overflow-x-auto shadow-md sm:rounded-lg bg-white border border-ink-100">
+          <table className="w-full min-w-[800px] text-sm">
               <thead className="bg-ink-50 text-ink-600">
                 <tr>
                   <th className="px-4 py-3 text-start font-medium">Product</th>
@@ -251,7 +252,6 @@ export default function InventoryPage() {
                 })}
               </tbody>
             </table>
-          </div>
         </div>
       </div>
 
@@ -376,56 +376,58 @@ function ProductEditor({
             </L>
 
             {/*
-             * Image upload.
+             * Image upload (Task 1 — spec-compliant).
              *   - File input (accept=image/*) replaces the old URL text field.
              *   - On select, we POST to /api/upload which writes to the
              *     `product-images` Supabase Storage bucket and returns the
-             *     public URL. That URL is stored on `d.image` and persisted
-             *     on save, exactly like the previous URL string.
-             *   - A small thumbnail previews whatever URL is currently set
-             *     (useful both after upload and when editing an existing
-             *     product).
+             *     direct public URL. That URL is stored on `d.image` and
+             *     persisted on save, exactly like the previous URL string.
+             *   - The preview uses a standard <img> (NOT next/image) with
+             *     w-full h-48 object-cover per Task 1 guidance — this
+             *     bypasses Next.js image optimization so a freshly-uploaded
+             *     public URL displays immediately without a config reload.
              */}
             <L label="Product image" wide>
-              <div className="flex items-start gap-3">
-                <div className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-xl border border-ink-200 bg-ink-50 text-ink-400">
-                  {d.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={d.image}
-                      alt="Preview"
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <Icon name="Package" size={22} />
-                  )}
-                </div>
-                <div className="min-w-0 flex-1 space-y-2">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={onFileSelected}
-                    disabled={uploading}
-                    className={cn(
-                      "block w-full text-sm text-ink-700",
-                      "file:me-3 file:rounded-lg file:border-0 file:bg-ink-900 file:px-3 file:py-2",
-                      "file:text-sm file:font-medium file:text-white hover:file:bg-ink-800",
-                      "disabled:opacity-60"
-                    )}
+              <div className="space-y-3">
+                {d.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={d.image}
+                    alt="Product preview"
+                    className="w-full h-48 object-cover rounded-xl border border-ink-200 bg-ink-50"
                   />
-                  {uploading && (
-                    <p className="text-xs text-ink-500">Uploading…</p>
+                ) : (
+                  <div className="grid h-48 w-full place-items-center rounded-xl border border-dashed border-ink-200 bg-ink-50 text-ink-400">
+                    <div className="flex flex-col items-center gap-1 text-xs">
+                      <Icon name="Package" size={24} />
+                      <span>No image selected</span>
+                    </div>
+                  </div>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={onFileSelected}
+                  disabled={uploading}
+                  className={cn(
+                    "block w-full text-sm text-ink-700",
+                    "file:me-3 file:rounded-lg file:border-0 file:bg-ink-900 file:px-3 file:py-2",
+                    "file:text-sm file:font-medium file:text-white hover:file:bg-ink-800",
+                    "disabled:opacity-60"
                   )}
-                  {uploadError && (
-                    <p className="text-xs text-red-600">{uploadError}</p>
-                  )}
-                  {d.image && !uploading && (
-                    <p className="truncate text-xs text-ink-500" title={d.image}>
-                      {d.image}
-                    </p>
-                  )}
-                </div>
+                />
+                {uploading && (
+                  <p className="text-xs text-ink-500">Uploading to Supabase Storage…</p>
+                )}
+                {uploadError && (
+                  <p className="text-xs text-red-600">{uploadError}</p>
+                )}
+                {d.image && !uploading && (
+                  <p className="truncate text-xs text-ink-500" title={d.image}>
+                    {d.image}
+                  </p>
+                )}
               </div>
             </L>
 

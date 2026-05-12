@@ -75,18 +75,16 @@ export default function OrdersAdminPage() {
         </div>
 
         {/*
-         * Responsive orders table:
-         *   - overflow-x-auto lets the whole table scroll horizontally
-         *     instead of overflowing the viewport on small screens.
-         *   - min-w-[820px] on the table preserves column readability
-         *     while scrolling.
+         * Responsive orders table (Task 2 — spec-compliant).
+         *   - overflow-x-auto shadow-md sm:rounded-lg wrapper per spec.
+         *   - min-w-[800px] on the table preserves column readability
+         *     while allowing horizontal scroll on phones.
          *   - Customer / Date columns are hidden on mobile; essentials
          *     (Order id, Total, Status) remain, with the order id cell
          *     folding the customer name + date underneath for context.
          */}
-        <div className="overflow-hidden rounded-2xl border border-ink-100 bg-white shadow-soft">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[820px] text-sm">
+        <div className="overflow-x-auto shadow-md sm:rounded-lg bg-white border border-ink-100">
+          <table className="w-full min-w-[800px] text-sm">
             <thead className="bg-ink-50 text-ink-600">
               <tr>
                 <th className="px-4 py-3 text-start font-medium">Order</th>
@@ -209,7 +207,6 @@ export default function OrdersAdminPage() {
               )}
             </tbody>
             </table>
-          </div>
         </div>
       </div>
     </AdminShell>
