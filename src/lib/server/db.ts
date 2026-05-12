@@ -193,6 +193,92 @@ export async function listCategories(): Promise<Category[]> {
   return rows.map(categoryFromRow);
 }
 
+export async function getCategory(id: string): Promise<Category | null> {
+  const { data, error } = await sb()
+    .from("categories")
+    .select(CATEGORY_COLUMNS)
+    .eq("id", id)
+    .maybeSingle();
+  if (error) raise("getCategory", error);
+  return data ? categoryFromRow(data as unknown as CategoryRow) : null;
+}
+
+/**
+ * Insert a new category row. The id is caller-provided (we use the slug, via
+ * nextCategoryId) to keep URLs and analytics references stable — the same
+ * pattern the seed script uses ("c-electronics", "c-fashion", …).
+ */
+export async function createCategory(c: Category): Promise<Category> {
+  const payload = {
+    id: c.id,
+    slug: c.slug,
+    name_en: c.name.en,
+    name_ar: c.name.ar,
+    name_fr: c.name.fr,
+    icon: c.icon,
+  };
+  const { data, error } = await sb()
+    .from("categories")
+    .insert(payload)
+    .select(CATEGORY_COLUMNS)
+    .single();
+  if (error) raise("createCategory", error);
+  return categoryFromRow(data as unknown as CategoryRow);
+}
+
+export async function updateCategory(
+  id: string,
+  patch: Partial<Category>
+): Promise<Category | null> {
+  const row: Record<string, unknown> = {};
+  if (patch.slug !== undefined) row.slug = patch.slug;
+  if (patch.icon !== undefined) row.icon = patch.icon;
+  if (patch.name) {
+    row.name_en = patch.name.en;
+    row.name_ar = patch.name.ar;
+    row.name_fr = patch.name.fr;
+  }
+  const { data, error } = await sb()
+    .from("categories")
+    .update(row)
+    .eq("id", id)
+    .select(CATEGORY_COLUMNS)
+    .maybeSingle();
+  if (error) raise("updateCategory", error);
+  return data ? categoryFromRow(data as unknown as CategoryRow) : null;
+}
+
+/**
+ * Delete a category. The foreign key on products(category_id) is ON DELETE
+ * RESTRICT, so Supabase (Postgres) will refuse if any product still points
+ * at this category. We surface that as a clean 409 Conflict via raise() —
+ * admins see "delete failed (code 23503) — reassign products first".
+ */
+export async function deleteCategory(id: string): Promise<Category | null> {
+  const { data, error } = await sb()
+    .from("categories")
+    .delete()
+    .eq("id", id)
+    .select(CATEGORY_COLUMNS)
+    .maybeSingle();
+  if (error) raise("deleteCategory", error);
+  return data ? categoryFromRow(data as unknown as CategoryRow) : null;
+}
+
+/**
+ * Build a deterministic category id from a slug. The seed data uses the
+ * "c-<slug>" pattern; we preserve it so manually-seeded rows and
+ * admin-created rows coexist cleanly.
+ */
+export function categoryIdForSlug(slug: string): string {
+  const clean = slug
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return `c-${clean || "new"}`;
+}
+
 // ---------- Orders ---------------------------------------------------------
 
 async function loadAllOrderItems(orderIds: string[]): Promise<OrderItemRow[]> {

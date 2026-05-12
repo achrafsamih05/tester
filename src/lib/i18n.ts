@@ -158,6 +158,7 @@ export const messages: Dict = {
   "admin.orders": { en: "Orders", ar: "الطلبات", fr: "Commandes" },
   "admin.invoices": { en: "Invoices", ar: "الفواتير", fr: "Factures" },
   "admin.users": { en: "Users", ar: "المستخدمون", fr: "Utilisateurs" },
+  "admin.categories": { en: "Categories", ar: "الفئات", fr: "Catégories" },
   "admin.settings": { en: "Settings", ar: "الإعدادات", fr: "Paramètres" },
 };
 

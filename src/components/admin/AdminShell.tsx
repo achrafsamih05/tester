@@ -25,6 +25,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const nav: NavItem[] = [
     { href: "/admin", label: t("admin.dashboard"), icon: "LayoutDashboard" },
     { href: "/admin/inventory", label: t("admin.inventory"), icon: "Boxes" },
+    { href: "/admin/categories", label: t("admin.categories"), icon: "Tag" },
     { href: "/admin/orders", label: t("admin.orders"), icon: "Package" },
     { href: "/admin/invoices", label: t("admin.invoices"), icon: "FileText" },
     { href: "/admin/users", label: t("admin.users"), icon: "Users" },
@@ -130,7 +131,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
             className="grid h-10 w-10 place-items-center rounded-xl border border-ink-200 bg-white text-ink-700 md:hidden"
             aria-label="Open menu"
           >
-            <Icon name="LayoutGrid" size={18} />
+            <Icon name="Menu" size={20} />
           </button>
           <div className="hidden text-sm text-ink-500 md:block">
             {t("admin.title")}

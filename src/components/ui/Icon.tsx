@@ -46,6 +46,10 @@ import {
   RefreshCw,
   Mail,
   Lock,
+  Menu,
+  Upload,
+  ImageIcon,
+  Tag,
   type LucideIcon,
 } from "lucide-react";
 
@@ -95,6 +99,10 @@ export const ICONS: Record<string, LucideIcon> = {
   RefreshCw,
   Mail,
   Lock,
+  Menu,
+  Upload,
+  Image: ImageIcon,
+  Tag,
 };
 
 export function Icon({

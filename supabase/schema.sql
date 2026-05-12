@@ -158,3 +158,26 @@ create policy "Public read settings"   on public.settings   for select using (tr
 -- users / orders / order_items / invoices are all accessed exclusively via
 -- the service-role client in src/lib/server/db.ts, so no anon policies are
 -- needed — the default "no policy = no access for anon" is exactly right.
+
+
+-- ===========================================================================
+-- Supabase Storage bucket for product image uploads
+--
+-- The /api/upload route pushes files into a bucket named `product-images`
+-- with the service-role key. The bucket must exist and must be PUBLIC so
+-- `storage.getPublicUrl(path)` returns a URL the storefront can use directly
+-- as `<img src>`.
+--
+-- Buckets can't reliably be created in SQL on every Supabase plan, so the
+-- recommended setup is the dashboard:
+--
+--   Supabase dashboard → Storage → New bucket
+--     Name:   product-images
+--     Public: ON (toggle "Public bucket")
+--
+-- After creation, uploaded object URLs look like:
+--   https://<project-ref>.supabase.co/storage/v1/object/public/product-images/products/<id>.jpg
+--
+-- These are already allow-listed in next.config.mjs via the `*.supabase.co`
+-- remotePatterns entry.
+-- ===========================================================================
